@@ -13,10 +13,9 @@ The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy
 
 ```lua
 {
-  dir = vim.fn.stdpath "config" .. "/toolchain",
-  name = "toolchain",
+  "bhargavms/mogra-toolchain",
+  name = "mogra-toolchain",
   lazy = false, -- Load immediately since it's a core tool
-  dev = true,
   opts = {
     ui = {
       title = "Toolchain",
@@ -27,9 +26,6 @@ The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy
     tools = {
       -- Tool configurations will be registered by the plugin
     }
-  },
-  dependencies = {
-    "nvim-lua/plenary.nvim", -- For utility functions
   },
 }
 ```
