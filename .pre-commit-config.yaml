@@ -11,6 +11,10 @@ repos:
       - id: check-yaml
         stages: [pre-commit]
         args: [--allow-multiple-documents]
+  - repo: https://github.com/JohnnyMorganz/StyLua
+    rev: v0.20.0
+    hooks:
+      - id: stylua
   - repo: local
     hooks:
       - id: Luacheck
