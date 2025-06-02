@@ -5,12 +5,7 @@ A Mason-like interface for managing development tools in Neovim. This plugin pro
 ## Features
 
 - Interactive UI for tool management
-- Support for multiple tool categories:
-  - Go tools
-  - NPM packages
-  - LuaRocks modules
-- Easy installation and updates
-- User-level installations (no sudo required)
+- Easily configure and register new tools
 
 ## Installation
 
