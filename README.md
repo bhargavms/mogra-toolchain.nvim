@@ -94,9 +94,6 @@ opts = {
 }
 ```
 
-## TODO
-- [] Provide guide on how to add and register tools
-
 ## License
 
 MIT License - see LICENSE file for details
