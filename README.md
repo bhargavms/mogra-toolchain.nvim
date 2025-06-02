@@ -55,15 +55,6 @@ The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy
 - `q` - Quit UI
 - `<CR>` - Install selected tool
 
-## Tool Categories
-
-### Go Tools
-Tools are loaded from `mogra.toolchain.tools.go` module.
-
-### NPM Tools
-Tools are loaded from `mogra.toolchain.tools.npm` module.
-
-### LuaRocks Tools
 Tools are loaded from `mogra.toolchain.tools.luarocks` module.
 
 ## Configuration
@@ -84,22 +75,8 @@ opts = {
 }
 ```
 
-## Development
-
-### Project Structure
-
-```
-toolchain/
-├── init.lua      # Main plugin file
-└── README.md     # This file
-```
-
-### Adding New Tools
-
-To add new tools:
-1. Create a new module in `mogra.toolchain.tools`
-2. Implement the required tool interface
-3. Register the tools in the module's `get_tools()` function
+## TODO
+- [] Provide guide on how to add and register tools
 
 ## License
 
