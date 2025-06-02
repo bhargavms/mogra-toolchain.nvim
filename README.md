@@ -24,7 +24,21 @@ The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy
       border = "rounded",
     },
     tools = {
-      -- Tool configurations will be registered by the plugin
+      {
+        name = "ripgrep",
+        description = "A fast search tool",
+        is_installed = function()
+          return vim.fn.executable("rg") == 1
+        end,
+        install = function()
+          os.execute("brew install ripgrep")
+          return vim.fn.executable("rg") == 1
+        end,
+        update = function()
+          os.execute("brew upgrade ripgrep")
+          return vim.fn.executable("rg") == 1
+        end,
+      }
     }
   },
 }
@@ -61,7 +75,21 @@ opts = {
     border = "rounded",     -- UI window border style
   },
   tools = {
-    -- Tool-specific configurations
+    {
+      name = "ripgrep",
+      description = "A fast search tool",
+      is_installed = function()
+        return vim.fn.executable("rg") == 1
+      end,
+      install = function()
+        os.execute("brew install ripgrep")
+        return vim.fn.executable("rg") == 1
+      end,
+      update = function()
+        os.execute("brew upgrade ripgrep")
+        return vim.fn.executable("rg") == 1
+      end,
+    }
   }
 }
 ```
