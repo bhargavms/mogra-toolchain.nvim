@@ -2,6 +2,18 @@ local M = {}
 
 local state = require("mogra-toolchain.state")
 
+---@class UI
+---@field title string
+---@field width integer
+---@field height integer
+---@field border string
+M.ui = {}
+
+---@param ui UI
+function M.setup(ui)
+  M.ui = ui
+end
+
 -- Create UI window
 function M.open_ui()
   if state.win and vim.api.nvim_win_is_valid(state.win) then
@@ -18,8 +30,8 @@ function M.open_ui()
   vim.bo[state.buf].swapfile = false
 
   -- Create window
-  local width = M.config.ui.width
-  local height = M.config.ui.height
+  local width = M.ui.width
+  local height = M.ui.height
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
 
@@ -30,8 +42,8 @@ function M.open_ui()
     width = width,
     height = height,
     style = "minimal",
-    border = M.config.ui.border,
-    title = M.config.ui.title,
+    border = M.ui.border,
+    title = M.ui.title,
     title_pos = "center",
   })
 
@@ -77,11 +89,11 @@ end
 -- Draw UI
 function M.draw_ui()
   local lines = {}
-  local width = M.config.ui.width
+  local width = M.ui.width
 
   -- Header
   table.insert(lines, string.rep("─", width))
-  table.insert(lines, " " .. M.config.ui.title)
+  table.insert(lines, " " .. M.ui.title)
   table.insert(lines, string.rep("─", width))
   table.insert(lines, "")
 

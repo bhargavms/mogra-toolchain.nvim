@@ -2,12 +2,6 @@ local module = require("mogra-toolchain.module")
 local ui = require("mogra-toolchain.ui")
 local command = require("mogra-toolchain.command")
 
----@class UI
----@field title string
----@field width integer
----@field height integer
----@field border string
-
 ---@class Tool
 ---@field name string
 ---@field description string
@@ -52,11 +46,10 @@ M.config = config
 function M.setup(opts)
   -- Merge user options with defaults
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
-end
-
----@param tool Tool
-function M.register(tool)
-  module.register(tool)
+  ui.setup(M.config.ui)
+  for _, tool in ipairs(M.config.tools) do
+    module.register(tool)
+  end
 end
 
 function M.open_ui()
