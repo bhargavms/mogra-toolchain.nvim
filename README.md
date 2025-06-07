@@ -6,6 +6,8 @@ A Mason-like interface for managing development tools in Neovim. This plugin pro
 
 - Interactive UI for tool management
 - Easily configure and register new tools
+- Abstract tools for common installation methods (tar balls, package managers)
+- Fluent builder pattern API for tool configuration
 
 ## Installation
 
@@ -67,6 +69,9 @@ Tools are loaded from `mogra.toolchain.tools.luarocks` module.
 The plugin can be configured through the `opts` table in your lazy.nvim configuration:
 
 ```lua
+local tar_tool = require("mogra-toolchain.tools.tar")
+local homebrew_tool = require("mogra-toolchain.tools.homebrew")
+
 opts = {
   ui = {
     title = "Toolchain",    -- UI window title
@@ -75,24 +80,51 @@ opts = {
     border = "rounded",     -- UI window border style
   },
   tools = {
-    {
-      name = "ripgrep",
-      description = "A fast search tool",
-      is_installed = function()
-        return vim.fn.executable("rg") == 1
-      end,
-      install = function()
-        os.execute("brew install ripgrep")
-        return vim.fn.executable("rg") == 1
-      end,
-      update = function()
-        os.execute("brew upgrade ripgrep")
-        return vim.fn.executable("rg") == 1
-      end,
-    }
+    -- Example: Using the builder pattern for tar-based installation
+    tar_tool.tool("fd")
+      :description("A simple, fast and user-friendly alternative to 'find'")
+      :version("8.7.0")
+      :url("https://github.com/sharkdp/fd/releases/download/v8.7.0/fd-v8.7.0-x86_64-apple-darwin.tar.gz")
+      :install_dir(vim.fn.stdpath("data") .. "/tools/fd")
+      :executable_dir(vim.fn.stdpath("data") .. "/bin")
+      :post_install(function()
+        -- Optional: Add any post-installation steps here
+        return true
+      end)
+      :build(),
+
+    -- Example: Using the builder pattern for Homebrew installation
+    homebrew_tool.tool("ripgrep")
+      :description("A fast search tool")
+      :package_name("ripgrep") -- Optional: defaults to tool name
+      :post_install(function()
+        -- Optional: Add any post-installation steps here
+        return true
+      end)
+      :post_update(function()
+        -- Optional: Add any post-update steps here
+        return true
+      end)
+      :build(),
+
+    -- Example: Minimal configuration with defaults
+    homebrew_tool.tool("jq")
+      :description("Command-line JSON processor")
+      :build(),
   }
 }
 ```
+
+=======
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ui.title` | string | `"Toolchain"` | Title of the UI window |
+| `ui.width` | number | `60` | Width of the UI window |
+| `ui.height` | number | `20` | Height of the UI window |
+| `ui.border` | string | `"rounded"` | Border style of the UI window |
+| `tools` | Tool[] | `{}` | Array of tools to manage |
 
 ## License
 
