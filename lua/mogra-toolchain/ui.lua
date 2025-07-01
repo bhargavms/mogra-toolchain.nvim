@@ -1,7 +1,7 @@
 local M = {}
 
 local state = require("mogra-toolchain.state")
-local command = requrie("mogra-toolchain.command")
+local command = require("mogra-toolchain.command")
 
 ---@class UI
 ---@field title string
@@ -68,20 +68,31 @@ function M.open_ui()
 
   -- Set key mappings
   vim.keymap.set("n", "i", function()
-    command.install_tool()
+    if command.install_tool() then
+      M.draw_ui()
+    end
   end, { buffer = state.buf })
+
   vim.keymap.set("n", "u", function()
-    command.update_tool()
+    if command.update_tool() then
+      M.draw_ui()
+    end
   end, { buffer = state.buf })
+
   vim.keymap.set("n", "q", function()
     M.open_ui()
   end, { buffer = state.buf })
+
   vim.keymap.set("n", "<CR>", function()
-    command.install_tool()
+    if command.install_tool() then
+      M.draw_ui()
+    end
   end, { buffer = state.buf })
+
   vim.keymap.set("n", "j", function()
     M.move_selection(1)
   end, { buffer = state.buf })
+
   vim.keymap.set("n", "k", function()
     M.move_selection(-1)
   end, { buffer = state.buf })
@@ -126,8 +137,4 @@ function M.move_selection(delta)
   M.draw_ui()
 end
 
--- Get current tool
-function M.get_current_tool()
-  return state.tools[state.selected]
-end
 return M
