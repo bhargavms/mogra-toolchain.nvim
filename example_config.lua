@@ -1,6 +1,6 @@
 -- Example configuration demonstrating the new builder pattern API
-local tar_tool = require("mogra-toolchain.tools.tar")
-local homebrew_tool = require("mogra-toolchain.tools.homebrew")
+local tar_tool = require("mogra_toolchain.tools.tar")
+local homebrew_tool = require("mogra_toolchain.tools.homebrew")
 
 return {
   ui = {

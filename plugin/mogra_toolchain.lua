@@ -1,4 +1,4 @@
-local plugin = require("mogra-toolchain")
+local plugin = require("mogra_toolchain")
 -- Create user commands
 vim.api.nvim_create_user_command("Toolchain", function()
   plugin.open_ui()

@@ -2,7 +2,7 @@
 ---@field register fun(self: Tool)
 ---@field setup fun(opts: Config)
 local M = {}
-local state = require("mogra-toolchain.state")
+local state = require("mogra_toolchain.state")
 
 ---@param tool Tool
 function M.register(tool)

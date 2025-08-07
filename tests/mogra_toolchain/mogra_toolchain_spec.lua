@@ -1,6 +1,6 @@
-local plugin = require("mogra-toolchain")
+local plugin = require("mogra_toolchain")
 
-describe("mogra-toolchain", function()
+describe("mogra_toolchain", function()
   before_each(function()
     -- Reset plugin to initial state
     plugin.config = {
@@ -84,7 +84,7 @@ describe("mogra-toolchain", function()
 
   describe("plugin metadata", function()
     it("should have correct metadata", function()
-      assert.equals("mogra-toolchain", plugin.name)
+      assert.equals("mogra_toolchain", plugin.name)
       assert.equals("0.1.0", plugin.version)
       assert.equals("A Mason-like interface for managing development tools", plugin.description)
       assert.equals("Bhargav Mogra", plugin.author)

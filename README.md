@@ -15,8 +15,8 @@ The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy
 
 ```lua
 {
-  "bhargavms/mogra-toolchain",
-  name = "mogra-toolchain",
+  "bhargavms/mogra_toolchain",
+  name = "mogra_toolchain",
   lazy = false, -- Load immediately since it's a core tool
   opts = {
     ui = {
@@ -69,8 +69,8 @@ Tools are loaded from `mogra.toolchain.tools.luarocks` module.
 The plugin can be configured through the `opts` table in your lazy.nvim configuration:
 
 ```lua
-local tar_tool = require("mogra-toolchain.tools.tar")
-local homebrew_tool = require("mogra-toolchain.tools.homebrew")
+local tar_tool = require("mogra_toolchain.tools.tar")
+local homebrew_tool = require("mogra_toolchain.tools.homebrew")
 
 opts = {
   ui = {

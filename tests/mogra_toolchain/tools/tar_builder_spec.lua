@@ -1,4 +1,4 @@
-local tar_tool = require("mogra-toolchain.tools.tar")
+local tar_tool = require("mogra_toolchain.tools.tar")
 
 describe("tar tool builder", function()
   before_each(function()

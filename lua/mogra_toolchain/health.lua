@@ -1,4 +1,4 @@
-local state = require("mogra-toolchain.state")
+local state = require("mogra_toolchain.state")
 
 local M = {}
 
@@ -13,7 +13,7 @@ function M.check()
   local tools = state.tools or {}
 
   if #tools == 0 then
-    vim.health.warn("No tools registered in mogra-toolchain.")
+    vim.health.warn("No tools registered in mogra_toolchain.")
     return
   end
 

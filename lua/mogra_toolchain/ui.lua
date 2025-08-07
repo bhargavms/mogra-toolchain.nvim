@@ -1,7 +1,7 @@
 local M = {}
 
-local state = require("mogra-toolchain.state")
-local command = require("mogra-toolchain.command")
+local state = require("mogra_toolchain.state")
+local command = require("mogra_toolchain.command")
 
 ---@class UI
 ---@field title string

@@ -1,7 +1,7 @@
---@tag mogra-toolchain.command
+--@tag mogra_toolchain.command
 local M = {}
 
-local state = require("mogra-toolchain.state")
+local state = require("mogra_toolchain.state")
 
 -- Install tool
 function M.install_tool()

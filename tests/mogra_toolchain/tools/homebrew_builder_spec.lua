@@ -1,4 +1,4 @@
-local homebrew_tool = require("mogra-toolchain.tools.homebrew")
+local homebrew_tool = require("mogra_toolchain.tools.homebrew")
 
 describe("homebrew tool builder", function()
   before_each(function()

@@ -1,6 +1,6 @@
-local module = require("mogra-toolchain.module")
-local ui = require("mogra-toolchain.ui")
-local command = require("mogra-toolchain.command")
+local module = require("mogra_toolchain.module")
+local ui = require("mogra_toolchain.ui")
+local command = require("mogra_toolchain.command")
 
 ---@class Tool
 ---@field name string
@@ -33,7 +33,7 @@ local config = {
 ---@field update_all fun()
 local M = {}
 
-M.name = "mogra-toolchain"
+M.name = "mogra_toolchain"
 M.version = "0.1.0"
 M.description = "A Mason-like interface for managing development tools"
 M.author = "Bhargav Mogra"
