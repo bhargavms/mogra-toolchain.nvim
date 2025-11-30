@@ -1,131 +1,154 @@
-# Mogra Toolchain
+# mogra-toolchain.nvim
 
-A Mason-like interface for managing development tools in Neovim. This plugin provides a simple and intuitive way to manage various development tools directly from Neovim.
+A Mason-inspired tool manager for Neovim. Define, install, and update development tools with a clean UI and live output.
 
 ## Features
 
-- Interactive UI for tool management
-- Easily configure and register new tools
-- Abstract tools for common installation methods (tar balls, package managers)
-- Fluent builder pattern API for tool configuration
+- **Live installation output** — See command output in real-time while tools install
+- **Flexible tool definitions** — Use simple command strings or dynamic functions
+- **Built-in builders** — Helpers for Homebrew and tarball installations
 
 ## Installation
 
-The plugin is designed to be used with [lazy.nvim](https://github.com/folke/lazy.nvim). Add the following to your Neovim configuration:
+### lazy.nvim
 
 ```lua
 {
-  "bhargavms/mogra_toolchain",
-  name = "mogra_toolchain",
-  lazy = false, -- Load immediately since it's a core tool
+  "mogra/mogra-toolchain.nvim",
   opts = {
-    ui = {
-      title = "Toolchain",
-      width = 60,
-      height = 20,
-      border = "rounded",
-    },
     tools = {
       {
         name = "ripgrep",
-        description = "A fast search tool",
+        description = "Fast grep alternative",
+        install_cmd = "brew install ripgrep",
+        update_cmd = "brew upgrade ripgrep",
         is_installed = function()
           return vim.fn.executable("rg") == 1
         end,
-        install = function()
-          os.execute("brew install ripgrep")
-          return vim.fn.executable("rg") == 1
-        end,
-        update = function()
-          os.execute("brew upgrade ripgrep")
-          return vim.fn.executable("rg") == 1
-        end,
-      }
-    }
+      },
+    },
   },
 }
 ```
 
 ## Usage
 
-### Commands
+| Command | Description |
+|---------|-------------|
+| `:Mogra` | Open the UI |
+| `:MograInstallAll` | Install all tools |
+| `:MograUpdateAll` | Update all tools |
 
-- `:Toolchain` - Open the tools UI
-- `:ToolchainInstallAll` - Install all tools
-- `:ToolchainUpdateAll` - Update all tools
+### Keybinds
 
-### UI Controls
-
-- `i` - Install selected tool
-- `u` - Update selected tool
-- `j/k` - Navigate through tools
-- `q` - Quit UI
-- `<CR>` - Install selected tool
-
-Tools are loaded from `mogra.toolchain.tools.luarocks` module.
+| Key | Action |
+|-----|--------|
+| `i` | Install tool under cursor |
+| `u` | Update tool under cursor |
+| `Enter` | Install tool under cursor |
+| `j`/`k` | Navigate (native vim) |
+| `q` / `Esc` | Close window |
 
 ## Configuration
 
-The plugin can be configured through the `opts` table in your lazy.nvim configuration:
-
 ```lua
-local tar_tool = require("mogra_toolchain.tools.tar")
-local homebrew_tool = require("mogra_toolchain.tools.homebrew")
-
 opts = {
   ui = {
-    title = "Toolchain",    -- UI window title
-    width = 60,             -- UI window width
-    height = 20,            -- UI window height
-    border = "rounded",     -- UI window border style
+    title = "Toolchain",     -- Window title
+    width = 0.8,             -- 80% of screen (or fixed number)
+    height = 0.9,            -- 90% of screen (or fixed number)
+    border = "rounded",      -- Border style
   },
-  tools = {
-    -- Example: Using the builder pattern for tar-based installation
-    tar_tool.tool("fd")
-      :description("A simple, fast and user-friendly alternative to 'find'")
-      :version("8.7.0")
-      :url("https://github.com/sharkdp/fd/releases/download/v8.7.0/fd-v8.7.0-x86_64-apple-darwin.tar.gz")
-      :install_dir(vim.fn.stdpath("data") .. "/tools/fd")
-      :executable_dir(vim.fn.stdpath("data") .. "/bin")
-      :post_install(function()
-        -- Optional: Add any post-installation steps here
-        return true
-      end)
-      :build(),
-
-    -- Example: Using the builder pattern for Homebrew installation
-    homebrew_tool.tool("ripgrep")
-      :description("A fast search tool")
-      :package_name("ripgrep") -- Optional: defaults to tool name
-      :post_install(function()
-        -- Optional: Add any post-installation steps here
-        return true
-      end)
-      :post_update(function()
-        -- Optional: Add any post-update steps here
-        return true
-      end)
-      :build(),
-
-    -- Example: Minimal configuration with defaults
-    homebrew_tool.tool("jq")
-      :description("Command-line JSON processor")
-      :build(),
-  }
+  tools = { ... },
 }
 ```
 
-=======
-### Configuration Options
+## Defining Tools
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `ui.title` | string | `"Toolchain"` | Title of the UI window |
-| `ui.width` | number | `60` | Width of the UI window |
-| `ui.height` | number | `20` | Height of the UI window |
-| `ui.border` | string | `"rounded"` | Border style of the UI window |
-| `tools` | Tool[] | `{}` | Array of tools to manage |
+### Simple tool
+
+```lua
+{
+  name = "ripgrep",
+  description = "Fast grep alternative",
+  install_cmd = "brew install ripgrep",
+  update_cmd = "brew upgrade ripgrep",
+  is_installed = function()
+    return vim.fn.executable("rg") == 1
+  end,
+}
+```
+
+### Dynamic commands
+
+Use `get_install_cmd` / `get_update_cmd` for runtime logic:
+
+```lua
+{
+  name = "fd",
+  description = "Fast find alternative",
+  get_install_cmd = function()
+    if vim.fn.executable("brew") == 1 then
+      return "brew install fd"
+    elseif vim.fn.executable("apt") == 1 then
+      return "sudo apt install fd-find"
+    end
+    return nil, "No supported package manager"
+  end,
+  get_update_cmd = function()
+    if vim.fn.executable("brew") == 1 then
+      return "brew upgrade fd"
+    end
+    return nil, "No supported package manager"
+  end,
+  is_installed = function()
+    return vim.fn.executable("fd") == 1
+  end,
+}
+```
+
+### Using builders
+
+#### Homebrew
+
+```lua
+local homebrew = require("mogra_toolchain.plugins.homebrew")
+
+homebrew.tool("jq")
+  :description("Command-line JSON processor")
+  :build()
+```
+
+#### Tarball from GitHub
+
+```lua
+local tar = require("mogra_toolchain.plugins.tar")
+
+tar.tool("fd")
+  :description("Fast find alternative")
+  :version("10.2.0")
+  :url("https://github.com/sharkdp/fd/releases/download/v10.2.0/fd-v10.2.0-x86_64-apple-darwin.tar.gz")
+  :install_dir(vim.fn.stdpath("data") .. "/tools/fd")
+  :executable_dir(vim.fn.stdpath("data") .. "/bin")
+  :build()
+```
+
+## Tool Definition Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✓ | Tool name |
+| `description` | string | ✓ | Short description |
+| `is_installed` | function | ✓ | Returns `true` if installed |
+| `install_cmd` | string | | Shell command to install |
+| `update_cmd` | string | | Shell command to update |
+| `get_install_cmd` | function | | Returns `(cmd, err)` |
+| `get_update_cmd` | function | | Returns `(cmd, err)` |
+
+## Health Check
+
+Run `:checkhealth mogra_toolchain` to see the status of all configured tools.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT

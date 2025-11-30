@@ -90,49 +90,27 @@ function M.create_homebrew_tool(config)
     return vim.fn.executable("brew") == 1
   end
 
-  local function run_brew_command(command)
-    if not is_homebrew_installed() then
-      error("Homebrew is not installed. Please install Homebrew first.")
-    end
-
-    local cmd = string.format("brew %s %s", command, config.package_name)
-    local success = os.execute(cmd)
-    return success
+  local function get_brew_command(command)
+    return string.format("brew %s %s", command, config.package_name)
   end
 
   local tool = {
     name = config.name,
     description = config.description,
     is_installed = is_installed,
-    install = function()
-      local success = run_brew_command("install")
-      if not success then
-        return false
+    -- Get the install command string dynamically (checks Homebrew availability at call time)
+    get_install_cmd = function()
+      if not is_homebrew_installed() then
+        return nil, "Homebrew is not installed"
       end
-
-      if config.post_install then
-        success = config.post_install()
-        if not success then
-          return false
-        end
-      end
-
-      return is_installed()
+      return get_brew_command("install")
     end,
-    update = function()
-      local success = run_brew_command("upgrade")
-      if not success then
-        return false
+    -- Get the update command string dynamically (checks Homebrew availability at call time)
+    get_update_cmd = function()
+      if not is_homebrew_installed() then
+        return nil, "Homebrew is not installed"
       end
-
-      if config.post_update then
-        success = config.post_update()
-        if not success then
-          return false
-        end
-      end
-
-      return is_installed()
+      return get_brew_command("upgrade")
     end,
   }
 

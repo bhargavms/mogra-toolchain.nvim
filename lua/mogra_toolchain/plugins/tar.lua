@@ -146,64 +146,30 @@ function M.create_tar_tool(config)
     return vim.fn.executable(config.executable_name) == 1
   end
 
-  local function download_and_extract()
-    local download_cmd = string.format("curl -L %s -o %s/%s.tar.gz", config.url, temp_dir, config.archive_name)
-    local success = os.execute(download_cmd)
-    if not success then
-      return false
-    end
-
-    local extract_cmd = string.format("tar -xzf %s/%s.tar.gz -C %s", temp_dir, config.archive_name, config.install_dir)
-    success = os.execute(extract_cmd)
-    if not success then
-      return false
-    end
-
-    return true
-  end
-
-  local function create_symlink()
-    local source = string.format("%s/%s", config.install_dir, config.executable_name)
-    local target = string.format("%s/%s", config.executable_dir, config.executable_name)
-
-    os.execute(string.format("rm -f %s", target))
-
-    local success = os.execute(string.format("ln -s %s %s", source, target))
-    return success
-  end
-
-  local function install()
-    vim.fn.mkdir(config.install_dir, "p")
-    vim.fn.mkdir(config.executable_dir, "p")
-
-    local success = download_and_extract()
-    if not success then
-      return false
-    end
-
-    success = create_symlink()
-    if not success then
-      return false
-    end
-
-    if config.post_install then
-      success = config.post_install()
-      if not success then
-        return false
-      end
-    end
-
-    return is_installed()
+  -- Get the install command as a single script (for output capture)
+  local function get_install_cmd()
+    local cmds = {
+      string.format("mkdir -p %s", config.install_dir),
+      string.format("mkdir -p %s", config.executable_dir),
+      string.format("curl -L %s -o %s/%s.tar.gz", config.url, temp_dir, config.archive_name),
+      string.format("tar -xzf %s/%s.tar.gz -C %s", temp_dir, config.archive_name, config.install_dir),
+      string.format("rm -f %s/%s", config.executable_dir, config.executable_name),
+      string.format("ln -s %s/%s %s/%s", config.install_dir, config.executable_name, config.executable_dir, config.executable_name),
+    }
+    return table.concat(cmds, " && ")
   end
 
   local tool = {
     name = config.name,
     description = config.description,
     is_installed = is_installed,
-    install = install,
-    update = function()
-      return install()
-    end,
+    -- Command strings for async execution with output capture
+    install_cmd = get_install_cmd(),
+    update_cmd = get_install_cmd(), -- Same as install for tar tools
+    -- Get the install command string (for output capture)
+    get_install_cmd = get_install_cmd,
+    -- Get the update command string (same as install for tar tools)
+    get_update_cmd = get_install_cmd,
   }
 
   return tool
