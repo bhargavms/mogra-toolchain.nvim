@@ -14,16 +14,29 @@ local M = {}
 ---@field width number Float 0-1 for percentage of screen, or integer > 1 for fixed width
 ---@field height number Float 0-1 for percentage of screen, or integer > 1 for fixed height
 ---@field border string
+---@field backdrop number Backdrop opacity (0-100). 100 = fully opaque (no backdrop), 0 = fully transparent
+
+---@class LogConfig
+---@field level integer Minimum log level (vim.log.levels.TRACE/DEBUG/INFO/WARN/ERROR)
+---@field use_console boolean|string Output to console ('sync', 'async', or false)
+---@field use_file boolean Write logs to file
 
 ---@class Config
 ---@field ui UIConfig
+---@field log LogConfig
 ---@field tools Tool[]
 local DEFAULT_SETTINGS = {
   ui = {
-    title = "Toolchain",
+    title = "mogra_toolchain.nvim",
     width = 0.8, -- 80% of screen width (same as Mason)
     height = 0.9, -- 90% of screen height (same as Mason)
     border = "rounded",
+    backdrop = 100, -- No backdrop by default (100 = fully opaque)
+  },
+  log = {
+    level = vim.log.levels.INFO, -- Minimum log level threshold
+    use_console = false, -- Output to neovim console ('sync', 'async', or false)
+    use_file = false, -- Write logs to file
   },
   tools = {},
 }

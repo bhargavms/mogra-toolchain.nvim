@@ -129,16 +129,25 @@ function M.Table(rows)
     end
   end
 
+  local new_rows = {}
   for i = 1, #rows do
     local row = rows[i]
+    local new_row = {}
     for j = 1, #row do
       local col = row[j]
       local content = col[1]
-      col[1] = content .. string.rep(" ", col_maxwidth[j] - vim.api.nvim_strwidth(content) + 1) -- +1 for default minimum padding
+      -- Shallow copy the column table with padded content
+      local new_col = {}
+      for k, v in pairs(col) do
+        new_col[k] = v
+      end
+      new_col[1] = content .. string.rep(" ", col_maxwidth[j] - vim.api.nvim_strwidth(content) + 1) -- +1 for default minimum padding
+      new_row[j] = new_col
     end
+    new_rows[i] = new_row
   end
 
-  return M.HlTextNode(rows)
+  return M.HlTextNode(new_rows)
 end
 
 ---@param opts { id: string }

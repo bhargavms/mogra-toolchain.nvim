@@ -17,6 +17,7 @@ end
 ---@param obj T
 ---@return T
 function EventEmitter.init(obj)
+  setmetatable(obj, EventEmitter)
   obj.__event_handlers = {}
   obj.__event_handlers_once = {}
   return obj
@@ -39,8 +40,12 @@ function EventEmitter:emit(event, ...)
     end
   end
   if self.__event_handlers_once[event] then
+    local to_remove = {}
     for handler in pairs(self.__event_handlers_once[event]) do
       call_handler(event, handler, ...)
+      to_remove[#to_remove + 1] = handler
+    end
+    for _, handler in ipairs(to_remove) do
       self.__event_handlers_once[event][handler] = nil
     end
   end

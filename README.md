@@ -58,6 +58,12 @@ opts = {
     width = 0.8,             -- 80% of screen (or fixed number)
     height = 0.9,            -- 90% of screen (or fixed number)
     border = "rounded",      -- Border style
+    backdrop = 100,          -- Backdrop opacity (0-100, 100 = no backdrop)
+  },
+  log = {
+    level = vim.log.levels.INFO,  -- Minimum log level (TRACE/DEBUG/INFO/WARN/ERROR)
+    use_console = false,          -- Output to console ('sync', 'async', or false)
+    use_file = false,             -- Write logs to file
   },
   tools = { ... },
 }

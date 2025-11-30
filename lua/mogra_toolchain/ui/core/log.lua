@@ -1,16 +1,12 @@
-local config = {
+local settings = require("mogra_toolchain.settings")
+
+-- Internal config (not user-facing)
+local internal_config = {
   -- Name of the plugin. Prepended to log messages
   name = "mogra_toolchain",
 
-  -- Should print the output to neovim while running
-  -- values: 'sync','async',false
-  use_console = false,
-
   -- Should highlighting be used in console (using echohl)
   highlights = true,
-
-  -- Should write to a file
-  use_file = false,
 
   -- Level configuration
   modes = {
@@ -24,6 +20,20 @@ local config = {
   -- Can limit the number of decimals displayed for floats
   float_precision = 0.01,
 }
+
+-- Helper to get current log config (reads from settings at call time)
+local function get_config()
+  local log_settings = settings.current.log or {}
+  return {
+    name = internal_config.name,
+    highlights = internal_config.highlights,
+    modes = internal_config.modes,
+    float_precision = internal_config.float_precision,
+    level = log_settings.level or vim.log.levels.INFO,
+    use_console = log_settings.use_console or false,
+    use_file = log_settings.use_file or false,
+  }
+end
 
 local log = {
   outfile = vim.fn.stdpath("log") .. "/mogra_toolchain.log",
@@ -45,6 +55,7 @@ do
   end
 
   local make_string = function(...)
+    local config = get_config()
     local t = {}
     for i = 1, select("#", ...) do
       local x = select(i, ...)
@@ -63,14 +74,15 @@ do
   end
 
   local log_at_level = function(level_config, message_maker, ...)
-    -- Return early if we're below the current_log_level
-    if level_config.level < vim.log.levels.INFO then
+    local config = get_config()
+    -- Return early if we're below the configured log level threshold
+    if level_config.level < config.level then
       return
     end
     local nameupper = level_config.name:upper()
 
     local msg = message_maker(...)
-    local info = debug.getinfo(config.info_level or 2, "Sl")
+    local info = debug.getinfo(3, "Sl")
     local lineinfo = info.short_src .. ":" .. info.currentline
 
     -- Output to console
@@ -111,7 +123,7 @@ do
     end
   end
 
-  for _, x in ipairs(config.modes) do
+  for _, x in ipairs(internal_config.modes) do
     log[x.name] = function(...)
       return log_at_level(x, make_string, ...)
     end
@@ -122,10 +134,14 @@ do
         local fmt = table.remove(passed, 1)
         local inspected = {}
         for _, v in ipairs(passed) do
-          if type(v) == "table" and tbl_has_tostring(v) then
-            table.insert(inspected, v)
+          if type(v) == "table" then
+            if tbl_has_tostring(v) then
+              table.insert(inspected, v)
+            else
+              table.insert(inspected, vim.inspect(v))
+            end
           else
-            table.insert(inspected, vim.inspect(v))
+            table.insert(inspected, tostring(v))
           end
         end
         return string.format(fmt, unpack(inspected))

@@ -309,14 +309,14 @@ function M.new_view_only_win(name, filetype)
 
     -- set line contents
     vim.api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
-    vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
+    vim.bo[bufnr].modifiable = true
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
+    vim.bo[bufnr].modifiable = false
 
     -- restore sticky cursor position
     if sticky_cursor then
       local new_sticky_cursor_line = output.sticky_cursors.id_map[sticky_cursor]
-      if new_sticky_cursor_line and new_sticky_cursor_line ~= cursor_pos_pre_render then
+      if new_sticky_cursor_line and new_sticky_cursor_line ~= cursor_pos_pre_render[1] then
         vim.api.nvim_win_set_cursor(win_id, { new_sticky_cursor_line, cursor_pos_pre_render[2] })
       end
     end
@@ -381,8 +381,7 @@ function M.new_view_only_win(name, filetype)
     local normal_hl = vim.api.nvim_get_hl and vim.api.nvim_get_hl(0, { name = "Normal" })
     local is_nvim_transparent = normal_hl and normal_hl.bg == nil
 
-    -- backdrop is hardcoded to 100 (fully opaque) since config doesn't have this setting
-    local backdrop = 100
+    local backdrop = settings.current.ui.backdrop or 100
     if backdrop ~= 100 and vim.o.termguicolors and not is_nvim_transparent then
       backdrop_bufnr = vim.api.nvim_create_buf(false, true)
       backdrop_win_id = vim.api.nvim_open_win(backdrop_bufnr, false, create_backdrop_window_opts())
@@ -441,16 +440,16 @@ function M.new_view_only_win(name, filetype)
 
     -- window options
     for key, value in pairs(win_opts) do
-      vim.api.nvim_win_set_option(win_id, key, value)
+      vim.wo[win_id][key] = value
     end
 
     if window_opts.winhighlight then
-      vim.api.nvim_win_set_option(win_id, "winhighlight", table.concat(window_opts.winhighlight, ","))
+      vim.wo[win_id].winhighlight = table.concat(window_opts.winhighlight, ",")
     end
 
     -- buffer options
     for key, value in pairs(buf_opts) do
-      vim.api.nvim_buf_set_option(bufnr, key, value)
+      vim.bo[bufnr][key] = value
     end
 
     vim.cmd([[ syntax clear ]])
@@ -497,7 +496,7 @@ function M.new_view_only_win(name, filetype)
       group = autoclose_augroup,
       pattern = "*",
       callback = function()
-        local buftype = vim.api.nvim_buf_get_option(0, "buftype")
+        local buftype = vim.bo[0].buftype
         -- This allows us to keep the floating window open for things like diagnostic popups, UI inputs á la dressing.nvim, etc.
         if buftype ~= "prompt" and buftype ~= "nofile" then
           close_window()
@@ -577,6 +576,9 @@ function M.new_view_only_win(name, filetype)
     end,
     ---@param tag any
     set_sticky_cursor = function(tag)
+      if not win_id or not vim.api.nvim_win_is_valid(win_id) then
+        return
+      end
       if output then
         local new_sticky_cursor_line = output.sticky_cursors.id_map[tag]
         if new_sticky_cursor_line then
