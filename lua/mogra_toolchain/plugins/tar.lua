@@ -172,16 +172,15 @@ function M.create_tar_tool(config)
       string.format("rm -f %s", symlink_path),
 
       -- Find the executable in install_dir (handles nested tar structures)
-      -- Look for executable file matching the name, prefer shallower paths
+      -- Pick first match from find's traversal order (not necessarily the shallowest)
       string.format(
         "FOUND_EXE=$(find %s -type f -name %s -perm -u+x 2>/dev/null | head -n1) && "
           .. 'if [ -z "$FOUND_EXE" ]; then '
-          .. "echo \"Error: executable '%s' not found in extracted archive\" >&2; exit 1; "
+          .. 'echo "Error: executable not found in extracted archive" >&2; exit 1; '
           .. "fi && "
           .. 'ln -s "$FOUND_EXE" %s',
         esc_install_dir,
         esc_executable_name,
-        config.executable_name,
         symlink_path
       ),
 

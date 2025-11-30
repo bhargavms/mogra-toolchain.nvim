@@ -29,9 +29,9 @@ local function get_config()
     highlights = internal_config.highlights,
     modes = internal_config.modes,
     float_precision = internal_config.float_precision,
-    level = log_settings.level or vim.log.levels.INFO,
-    use_console = log_settings.use_console or false,
-    use_file = log_settings.use_file or false,
+    level = (log_settings.level ~= nil) and log_settings.level or vim.log.levels.INFO,
+    use_console = (log_settings.use_console ~= nil) and log_settings.use_console or false,
+    use_file = (log_settings.use_file ~= nil) and log_settings.use_file or false,
   }
 end
 
