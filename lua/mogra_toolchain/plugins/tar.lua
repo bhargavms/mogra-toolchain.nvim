@@ -139,71 +139,72 @@ function M.create_tar_tool(config)
   config.executable_name = config.executable_name or config.name
   config.archive_name = config.archive_name or config.name
 
-  local temp_dir = vim.fn.tempname()
-  vim.fn.mkdir(temp_dir, "p")
-
   local function is_installed()
     return vim.fn.executable(config.executable_name) == 1
   end
 
-  local function download_and_extract()
-    local download_cmd = string.format("curl -L %s -o %s/%s.tar.gz", config.url, temp_dir, config.archive_name)
-    local success = os.execute(download_cmd)
-    if not success then
-      return false
-    end
+  -- Get the install command as a single script (for output capture)
+  local function get_install_cmd()
+    local temp_dir = vim.fn.tempname()
 
-    local extract_cmd = string.format("tar -xzf %s/%s.tar.gz -C %s", temp_dir, config.archive_name, config.install_dir)
-    success = os.execute(extract_cmd)
-    if not success then
-      return false
-    end
+    -- Shell-escape all paths and URL for safe interpolation
+    local esc_temp_dir = vim.fn.shellescape(temp_dir)
+    local esc_install_dir = vim.fn.shellescape(config.install_dir)
+    local esc_executable_dir = vim.fn.shellescape(config.executable_dir)
+    local esc_url = vim.fn.shellescape(config.url)
+    local esc_executable_name = vim.fn.shellescape(config.executable_name)
+    local tarball = vim.fn.shellescape(temp_dir .. "/" .. config.archive_name .. ".tar.gz")
+    local symlink_path = vim.fn.shellescape(config.executable_dir .. "/" .. config.executable_name)
 
-    return true
-  end
+    local cmds = {
+      -- Create directories
+      string.format("mkdir -p %s", esc_temp_dir),
+      string.format("mkdir -p %s", esc_install_dir),
+      string.format("mkdir -p %s", esc_executable_dir),
 
-  local function create_symlink()
-    local source = string.format("%s/%s", config.install_dir, config.executable_name)
-    local target = string.format("%s/%s", config.executable_dir, config.executable_name)
+      -- Download tarball
+      string.format("curl -fSL %s -o %s", esc_url, tarball),
 
-    os.execute(string.format("rm -f %s", target))
+      -- Extract tarball
+      string.format("tar -xzf %s -C %s", tarball, esc_install_dir),
 
-    local success = os.execute(string.format("ln -s %s %s", source, target))
-    return success
-  end
+      -- Remove old symlink if it exists
+      string.format("rm -f %s", symlink_path),
 
-  local function install()
-    vim.fn.mkdir(config.install_dir, "p")
-    vim.fn.mkdir(config.executable_dir, "p")
+      -- Find the executable in install_dir (handles nested tar structures)
+      -- Look for executable file matching the name, prefer shallower paths
+      string.format(
+        "FOUND_EXE=$(find %s -type f -name %s -perm -u+x 2>/dev/null | head -n1) && "
+          .. 'if [ -z "$FOUND_EXE" ]; then '
+          .. "echo \"Error: executable '%s' not found in extracted archive\" >&2; exit 1; "
+          .. "fi && "
+          .. 'ln -s "$FOUND_EXE" %s',
+        esc_install_dir,
+        esc_executable_name,
+        config.executable_name,
+        symlink_path
+      ),
 
-    local success = download_and_extract()
-    if not success then
-      return false
-    end
-
-    success = create_symlink()
-    if not success then
-      return false
-    end
-
-    if config.post_install then
-      success = config.post_install()
-      if not success then
-        return false
-      end
-    end
-
-    return is_installed()
+      -- Cleanup: remove temp directory and tarball
+      string.format("rm -rf %s", esc_temp_dir),
+    }
+    return table.concat(cmds, " && ")
   end
 
   local tool = {
     name = config.name,
     description = config.description,
     is_installed = is_installed,
-    install = install,
-    update = function()
-      return install()
-    end,
+    -- Command strings for async execution with output capture
+    install_cmd = get_install_cmd(),
+    update_cmd = get_install_cmd(), -- Same as install for tar tools
+    -- Get the install command string (for output capture)
+    get_install_cmd = get_install_cmd,
+    -- Get the update command string (same as install for tar tools)
+    get_update_cmd = get_install_cmd,
+    -- Hooks to run after installation/update completes
+    post_install = config.post_install,
+    post_update = config.post_update,
   }
 
   return tool

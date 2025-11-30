@@ -1,0 +1,26 @@
+{
+  "highlights": [
+    {
+      "col_end": 48,
+      "col_start": 26,
+      "hl_group": "MograToolchainHeader",
+      "line": 0
+    },
+    {
+      "col_end": 54,
+      "col_start": 48,
+      "hl_group": "MograToolchainHeader",
+      "line": 0
+    },
+    {
+      "col_end": 64,
+      "col_start": 15,
+      "hl_group": "MograToolchainComment",
+      "line": 1
+    }
+  ],
+  "lines": [
+    "                           mogra_toolchain.nvim 0.1.0 ",
+    "               https://github.com/bhargavms/mogra-toolchain.nvim"
+  ]
+}

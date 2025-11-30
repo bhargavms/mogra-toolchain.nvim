@@ -1,0 +1,15 @@
+{
+  "highlights": [
+    {
+      "col_end": 46,
+      "col_start": 0,
+      "hl_group": "MograToolchainComment",
+      "line": 2
+    }
+  ],
+  "lines": [
+    "",
+    "",
+    " i: Install  u: Update  l: Toggle log  q: Quit"
+  ]
+}
