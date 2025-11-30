@@ -1,4 +1,5 @@
 local _ = require("mogra_toolchain.ui.core.functional")
+
 local M = {}
 
 ---@alias NodeType
@@ -162,9 +163,18 @@ end
 
 ---Makes it possible to create stateful animations by progressing from the start of a range to the end.
 ---This is done in "ticks", in accordance with the provided options.
----@param opts {range: integer[], delay_ms: integer, start_delay_ms: integer, iteration_delay_ms: integer}
+---@param opts {fn: fun(tick: integer), range: integer[], delay_ms: integer, start_delay_ms?: integer, iteration_delay_ms?: integer}
+---  - fn: Animation callback invoked with current tick (also accepts opts[1] for backward compatibility)
+---  - range: {start_tick, end_tick} inclusive range of tick values
+---  - delay_ms: Delay between ticks in milliseconds
+---  - start_delay_ms: Optional delay before starting animation
+---  - iteration_delay_ms: Optional delay before restarting (loops if set)
 function M.animation(opts)
-  local animation_fn = opts[1]
+  local animation_fn = opts.fn or opts[1]
+  assert(type(animation_fn) == "function", "animation: opts.fn must be a function")
+  assert(opts.range and opts.range[1] and opts.range[2], "animation: opts.range must be {start, end}")
+  assert(type(opts.delay_ms) == "number", "animation: opts.delay_ms must be a number")
+
   local start_tick, end_tick = opts.range[1], opts.range[2]
   local is_animating = false
   local epoch = 0 -- Generation counter to invalidate stale callbacks

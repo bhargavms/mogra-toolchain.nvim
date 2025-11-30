@@ -195,13 +195,9 @@ function M.create_tar_tool(config)
     name = config.name,
     description = config.description,
     is_installed = is_installed,
-    -- Command strings for async execution with output capture
-    install_cmd = get_install_cmd(),
-    update_cmd = get_install_cmd(), -- Same as install for tar tools
-    -- Get the install command string (for output capture)
+    -- Lazy command generators (fresh temp_dir each call)
     get_install_cmd = get_install_cmd,
-    -- Get the update command string (same as install for tar tools)
-    get_update_cmd = get_install_cmd,
+    get_update_cmd = get_install_cmd, -- Same as install for tar tools
     -- Hooks to run after installation/update completes
     post_install = config.post_install,
     post_update = config.post_update,

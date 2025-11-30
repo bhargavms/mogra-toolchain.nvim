@@ -57,6 +57,12 @@ local function get_log_file_handle()
         end,
         once = true,
       })
+    else
+      -- Mark as attempted to avoid repeated open failures
+      log_file_handle = false
+      vim.schedule(function()
+        vim.notify("mogra_toolchain: Failed to open log file: " .. log.outfile, vim.log.levels.WARN)
+      end)
     end
   end
   return log_file_handle

@@ -4,7 +4,7 @@
 ---@field name string
 ---@field description string
 ---@field is_installed fun(): boolean
----@field install_state InstallState Installation state: "installed", "not_installed", "installing", or "failed"
+---@field install_state InstallState Installation state: "checking", "installed", "not_installed", "installing", or "failed"
 ---@field install_cmd string? Optional install command string
 ---@field update_cmd string? Optional update command string
 ---@field get_install_cmd fun(): string?, string? Optional function that returns install command string or (nil, error_message)

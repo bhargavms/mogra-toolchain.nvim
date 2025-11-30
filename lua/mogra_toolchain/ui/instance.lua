@@ -55,7 +55,7 @@ local function check_tool_statuses()
   local state = get_state()
   local tool_count = #state.tools.all
 
-  if tool_count == 0 then
+  if tool_count == 0 or state.tools.checking_statuses then
     return
   end
 
