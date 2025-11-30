@@ -102,10 +102,31 @@ do
     return table.concat(t, " ")
   end
 
+  -- Map string level names to numeric vim.log.levels equivalents
+  local level_name_to_num = {
+    trace = vim.log.levels.TRACE,
+    debug = vim.log.levels.DEBUG,
+    info = vim.log.levels.INFO,
+    warn = vim.log.levels.WARN,
+    error = vim.log.levels.ERROR,
+  }
+
+  local function normalize_level(level)
+    if type(level) == "number" then
+      return level
+    elseif type(level) == "string" then
+      return level_name_to_num[level:lower()] or vim.log.levels.INFO
+    else
+      return vim.log.levels.INFO
+    end
+  end
+
   local log_at_level = function(level_config, message_maker, ...)
     local config = get_config()
+    -- Ensure config.level is numeric before comparing
+    local effective_level = normalize_level(config.level)
     -- Return early if we're below the configured log level threshold
-    if level_config.level < config.level then
+    if level_config.level < effective_level then
       return
     end
     local nameupper = level_config.name:upper()
@@ -128,7 +149,7 @@ do
           local formatted_msg = string.format("[%s] %s", config.name, vim.fn.escape(v, [["\]]))
           local ok = pcall(vim.cmd, string.format([[echom "%s"]], formatted_msg))
           if not ok then
-            vim.api.nvim_out_write(msg .. "\n")
+            vim.api.nvim_out_write(formatted_msg .. "\n")
           end
         end
 
