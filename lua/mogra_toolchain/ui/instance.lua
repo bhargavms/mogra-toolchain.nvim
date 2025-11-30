@@ -204,6 +204,7 @@ local function start_refresh_timer()
 end
 
 local function close_window()
+  stop_refresh_timer()
   window.close()
 end
 
