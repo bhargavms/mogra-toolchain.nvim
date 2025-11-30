@@ -17,7 +17,16 @@ ToolState.__index = ToolState
 
 ---Create a new ToolState instance
 ---@param tool Tool The tool configuration to create state for
----@return ToolState
+-- Create a new ToolState initialized from a tool configuration.
+-- @param tool Table describing the tool. Expected fields:
+--   - name (string)
+--   - description (string)
+--   - is_installed (function) : returns boolean when called
+--   - install_cmd (string|nil)
+--   - update_cmd (string|nil)
+--   - get_install_cmd (function|nil) : returns (string|nil, string|nil)
+--   - get_update_cmd (function|nil) : returns (string|nil, string|nil)
+-- @return ToolState A ToolState instance with initial fields set and install_state set to "checking".
 function ToolState.new(tool)
   local self = setmetatable({}, ToolState)
 
@@ -37,7 +46,12 @@ function ToolState.new(tool)
 end
 
 ---Install this tool
----@param mutate_state fun(fn: fun(state: ToolchainUiState))
+-- Initiates installation for this tool and updates the ToolState and log outputs accordingly.
+-- Resets log preview state, resolves an install command (via `get_install_cmd` or `install_cmd`), and either
+-- runs the command (capturing output into `tailed_output` and `short_tailed_output`, capped to the last 100 lines)
+-- and sets `install_state` to "installed" on success or "failed" on error, or records an error/warning message if
+-- no command is available. Calls `mutate_state` to trigger UI re-renders after state changes.
+-- @param mutate_state fun(fn: fun(state: ToolchainUiState)) Function used to schedule a UI state mutation / re-render.
 function ToolState:install(mutate_state)
   -- Reset log state
   self.tailed_output = ""
@@ -58,7 +72,8 @@ function ToolState:install(mutate_state)
     self.install_state = "installing"
     mutate_state(function(_) end) -- Trigger re-render to show installing section
 
-    -- Add line to log
+    -- Appends a single output line to the tool's log, updates the log preview, trims the log to the last 100 lines, and triggers a UI re-render.
+    -- @param line The new log line to append. If `line` contains non-whitespace characters it becomes the `short_tailed_output` (leading whitespace removed). The full log (`tailed_output`) is appended with a newline when necessary and is truncated to the most recent 100 lines.
     local function add_output(line)
       if self.tailed_output ~= "" then
         self.tailed_output = self.tailed_output .. "\n" .. line
@@ -103,7 +118,9 @@ function ToolState:install(mutate_state)
 end
 
 ---Update this tool
----@param mutate_state fun(fn: fun(state: ToolchainUiState))
+-- Runs the tool's update command (resolved via `get_update_cmd` or `update_cmd`), captures its live output into `tailed_output`/`short_tailed_output`, and updates `install_state` to reflect progress and result.
+-- If a command is available, sets `install_state` to `"installing"`, streams command output (keeps the last non-empty line in `short_tailed_output` and limits `tailed_output` to the last 100 lines), and on completion sets `install_state` to `"installed"` on success or `"failed"` on error while appending a success or failure note to the log. If resolving the command returns an error, writes that error to the log; if no command is configured, writes a warning to the log.
+-- @param mutate_state fun(fn: fun(state: ToolchainUiState)) Function used to request a UI re-render; called after state mutations.
 function ToolState:update(mutate_state)
   -- Reset log state
   self.tailed_output = ""
@@ -124,7 +141,8 @@ function ToolState:update(mutate_state)
     self.install_state = "installing"
     mutate_state(function(_) end) -- Trigger re-render to show installing section
 
-    -- Add line to log
+    -- Appends a single output line to the tool's log, updates the log preview, trims the log to the last 100 lines, and triggers a UI re-render.
+    -- @param line The new log line to append. If `line` contains non-whitespace characters it becomes the `short_tailed_output` (leading whitespace removed). The full log (`tailed_output`) is appended with a newline when necessary and is truncated to the most recent 100 lines.
     local function add_output(line)
       if self.tailed_output ~= "" then
         self.tailed_output = self.tailed_output .. "\n" .. line

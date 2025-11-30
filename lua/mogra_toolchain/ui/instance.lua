@@ -12,7 +12,10 @@ local Main = require("mogra_toolchain.ui.components.main")
 
 require("mogra_toolchain.ui.colors")
 
----@param _state ToolchainUiState
+-- Create a UI node that registers global keybindings for window and tool actions.
+-- @param _state The current toolchain UI state (accepted for component signature; not used).
+-- @return A Ui.Node containing keybindings for closing the window (`q`, `<Esc>`),
+-- installing a tool (`i`, `<CR>`), and updating a tool (`u`).
 local function GlobalKeybinds(_state)
   return Ui.Node({
     Ui.Keybind("q", "CLOSE_WINDOW", nil, true),
@@ -50,6 +53,14 @@ local window = display.new_view_only_win("mogra.nvim", "mogra_toolchain")
 
 local mutate_state, get_state = window.state(INITIAL_STATE)
 
+-- Initiates per-tool status checks and updates each tool's `install_state`.
+-- 
+-- This triggers a non-blocking, sequential check of every tool in `state.tools.all`.
+-- It sets `tools.checking_statuses` to `true` for the duration of the operation and
+-- clears it when finished or when the window is closed. For each tool found, the
+-- function updates `install_state` to `"installed"` or `"not_installed"` unless the
+-- tool's current `install_state` is `"installing"`. If a tool is removed while
+-- checking is in progress or the window closes, the process stops or skips that tool.
 local function check_tool_statuses()
   local state = get_state()
   local tool_count = #state.tools.all
@@ -138,7 +149,10 @@ local function check_tool_statuses()
   end)
 end
 
--- Initialize tools
+-- Initialize UI tool states from configured tools and begin background status checks.
+-- 
+-- Replaces the state's tools list with new ToolState instances created from settings.current.tools,
+-- then triggers an asynchronous sweep to determine each tool's installation status.
 local function setup_tools()
   mutate_state(function(s)
     -- Convert Tool objects to ToolState
@@ -154,6 +168,8 @@ end
 -- Refresh tools periodically (when UI is open)
 local refresh_timer = nil
 
+-- Stops and closes the active refresh timer, if one exists.
+-- If a timer is running, this function stops it, closes its resources, and clears the internal reference.
 local function stop_refresh_timer()
   if refresh_timer then
     refresh_timer:stop()
@@ -162,6 +178,9 @@ local function stop_refresh_timer()
   end
 end
 
+-- Starts a repeating 100ms refresh timer that forces UI re-renders (used for spinner animation)
+-- and checks whether the configured tools list changed; if it did, reinitializes tools.
+-- Does nothing if a refresh timer is already active. The timer is stopped automatically when the window closes.
 local function start_refresh_timer()
   if refresh_timer then
     return
@@ -187,10 +206,13 @@ local function start_refresh_timer()
   end)
 end
 
+-- Closes the toolchain UI window and releases associated resources (stops timers and frees the window).
 local function close_window()
   window.close()
 end
 
+-- Get the ToolState corresponding to the current cursor line.
+-- @return The ToolState at the cursor line, or `nil` if no tool is mapped to that line.
 local function get_tool_at_cursor()
   local state = get_state()
   local cursor = window.get_cursor()
@@ -198,6 +220,8 @@ local function get_tool_at_cursor()
   return state.tools.line_to_tool[line]
 end
 
+-- Installs the tool under the cursor, if present.
+-- If no tool is under the cursor, no action is taken.
 local function install_tool(_event)
   local tool = get_tool_at_cursor()
   if tool then
@@ -205,6 +229,8 @@ local function install_tool(_event)
   end
 end
 
+-- Initiates an update of the tool currently under the cursor in the tool list.
+-- If a tool is selected, invokes its update routine; does nothing if no tool is at the cursor.
 local function update_tool(_event)
   local tool = get_tool_at_cursor()
   if tool then
@@ -231,7 +257,8 @@ window.view(
   end
 )
 
--- Get border config from settings module
+-- Determine the UI border style from settings with a capability-based fallback.
+-- @return The border style string from `settings.current.ui.border`, or `"rounded"` if Neovim supports `&winborder`, otherwise `"none"`.
 local function get_border()
   local config = settings.current
   local border = config.ui.border

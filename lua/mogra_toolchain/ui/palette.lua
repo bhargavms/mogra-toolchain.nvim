@@ -1,5 +1,8 @@
 local M = {}
 
+-- Create a highlight wrapper factory.
+-- @param highlight The highlight group name to associate with text (empty string for no highlight).
+-- @return A function that accepts `text` and returns a two-element table: `{ text, highlight }`.
 local function hl(highlight)
   return function(text)
     return { text, highlight }

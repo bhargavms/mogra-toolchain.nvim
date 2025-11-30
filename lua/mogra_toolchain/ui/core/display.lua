@@ -9,7 +9,11 @@ local M = {}
 
 ---@generic T
 ---@param debounced_fn fun(arg1: T)
----@return fun(arg1: T)
+-- Creates a wrapper that coalesces rapid calls into a single future invocation.
+-- The returned function accepts one argument; repeated calls before the scheduled
+-- invocation replace the pending argument so only the most recent value is delivered.
+-- @param debounced_fn Function to be invoked once with the latest argument.
+-- @return A function that takes one argument and schedules a single call to `debounced_fn` with the last provided argument.
 local function debounced(debounced_fn)
   local queued = false
   local last_arg = nil
@@ -28,7 +32,10 @@ local function debounced(debounced_fn)
 end
 
 ---@param line string
----@param render_context RenderContext
+-- Compute the indentation (in spaces) for a given line based on the active block styles and viewport width.
+-- @param line The text of the line used to compute length for centering.
+-- @param render_context Table with rendering context; expects `applied_block_styles` (array of style arrays) and `viewport_context.win_width` for CENTERED calculations.
+-- @return A table with field `indentation` set to the number of leading spaces to apply. CENTERED overrides prior INDENT accumulations.
 local function get_styles(line, render_context)
   local indentation = 0
 
@@ -53,7 +60,20 @@ end
 ---@param viewport_context ViewportContext
 ---@param node INode
 ---@param opt_render_context RenderContext?
----@param opt_output RenderOutput?
+-- Render an abstract UI node tree into a render output structure for buffer display.
+-- Converts node types (VIRTUAL_TEXT, HL_TEXT, NODE, CASCADING_STYLE, KEYBIND_HANDLER, DIAGNOSTICS, STICKY_CURSOR)
+-- into a cumulative RenderOutput containing lines, virtual texts, highlights, keybinds, diagnostics, and sticky cursor mappings.
+-- @param viewport_context ViewportContext The current viewport metrics (e.g., width) used for styling decisions.
+-- @param node table The node to render; expected to include a `type` field and type-specific fields (e.g., `lines`, `children`, `styles`, `virt_text`, `key`, `effect`, `diagnostic`, `id`).
+-- @param opt_render_context RenderContext? Optional rendering context to carry viewport_context and a stack of applied block styles; if omitted a new context is created.
+-- @param opt_output RenderOutput? Optional output accumulator to append results into; if omitted a new output object is created and returned.
+-- @return RenderOutput The accumulated rendering result with fields:
+--   - lines: array of buffer lines (strings).
+--   - virt_texts: array of {line = number, content = table} for extmarks/virtual text.
+--   - highlights: array of highlight entries {hl_group, line, col_start, col_end}.
+--   - keybinds: array of keybind entries {line, key, effect, payload}.
+--   - diagnostics: array of diagnostics {line, message, severity, source}.
+--   - sticky_cursors: tables `line_map` (number -> id) and `id_map` (id -> number) mapping sticky cursor tags to lines.
 local function render_node(viewport_context, node, opt_render_context, opt_output)
   ---@class RenderContext
   ---@field viewport_context ViewportContext
@@ -171,13 +191,21 @@ M._render_node = render_node
 ---@alias WindowOpts { effects?: table<string, fun()>, winhighlight?: string[], border?: string|table }
 
 ---@param size number
----@param viewport integer
+-- Compute an absolute dimension from a size specification and a viewport extent.
+-- If `size` is greater than 1 it is treated as an absolute count and capped to `viewport`.
+-- If `size` is between 0 and 1 (inclusive of 0, less than or equal to 1) it is treated as a fraction of `viewport`; the resulting value is floored.
+-- @param size Number that is either an absolute size (>1) or a fraction of the viewport (0..1).
+-- @param viewport Integer total available extent (rows or columns).
+-- @return Integer resolved size constrained to the viewport.
 local function calc_size(size, viewport)
   return size > 1 and math.min(size, viewport) or math.floor(size * viewport)
 end
 
 ---@param opts WindowOpts
----@param sizes_only boolean Whether to only return properties that control the window size.
+-- Compute a centered popup window layout (size and screen position) based on editor dimensions and current UI settings.
+-- @param opts Table of window options; at minimum `opts.border` may influence centering adjustments.
+-- @param sizes_only boolean If true, omit window decoration fields (e.g., `border`) from the returned layout.
+-- @return table A window layout table containing `height`, `width`, `row`, `col`, `relative`, `style`, and `zindex`. Includes `border` when `sizes_only` is false.
 local function create_popup_window_opts(opts, sizes_only)
   local lines = vim.o.lines - vim.o.cmdheight
   local columns = vim.o.columns
@@ -208,6 +236,17 @@ local function create_popup_window_opts(opts, sizes_only)
   return popup_layout
 end
 
+-- Builds window options for a full-screen, non-focusable backdrop window that covers the entire editor.
+-- @return A table of window options with fields:
+--   - `relative`: `"editor"`
+--   - `width`: current editor column count (`vim.o.columns`)
+--   - `height`: current editor line count (`vim.o.lines`)
+--   - `row`: `0`
+--   - `col`: `0`
+--   - `style`: `"minimal"`
+--   - `focusable`: `false`
+--   - `border`: `"none"`
+--   - `zindex`: `44`
 local function create_backdrop_window_opts()
   return {
     relative = "editor",
@@ -223,7 +262,23 @@ local function create_backdrop_window_opts()
 end
 
 ---@param name string Human readable identifier.
----@param filetype string
+-- Create a view-only floating window instance with its own namespace, event surface, and rendering lifecycle.
+-- Configures a dedicated buffer/window, diagnostics namespace, rendering loop, keybind/effect dispatching, and optional backdrop.
+-- @param name The logical name used to create the window's namespace and identifiers.
+-- @param filetype The buffer filetype to set for the view buffer.
+-- @return table An instance with the following fields and methods:
+--   - events: EventEmitter for subscribing to instance-level events.
+--   - view(new_renderer): register a renderer function that maps state -> view.
+--   - effects(new_effects): register effect handlers used by keybinds.
+--   - state(initial_state): initialize a debounced state container; returns (mutate_state, get_state).
+--   - init(opts): provide WindowOpts to configure window behaviour (must be called after view/state).
+--   - open(): open the floating window (scheduled); asserts init was called.
+--   - close(): close the window and teardown autocommands (scheduled); asserts init was called.
+--   - set_cursor(pos): set the window cursor (row, col); asserts window is open.
+--   - get_cursor(): get the current window cursor (row, col); asserts window is open.
+--   - is_open(): boolean indicating whether the window is currently open.
+--   - set_sticky_cursor(tag): attempt to set a sticky cursor by logical tag if present in the last render.
+--   - get_win_config(): return the current window configuration; asserts window is open.
 function M.new_view_only_win(name, filetype)
   local namespace = vim.api.nvim_create_namespace(("installer_%s"):format(name))
   local bufnr, backdrop_bufnr, renderer, mutate_state, get_state, unsubscribe
@@ -245,6 +300,8 @@ function M.new_view_only_win(name, filetype)
     virtual_lines = false,
   }, namespace)
 
+  -- Schedule closing of the view's floating window if it is currently valid.
+  -- The actual close is deferred (scheduled) and will no-op when the window is already gone.
   local function close_window()
     -- We queue the win_buf to be deleted in a schedule call, otherwise when used with folke/which-key (and
     -- set timeoutlen=0) we run into a weird segfault.
@@ -258,7 +315,10 @@ function M.new_view_only_win(name, filetype)
   end
 
   ---@param line number
-  ---@param key string
+  -- Invoke the registered effect handler associated with `key` for a specific line.
+  -- @param line The line number whose keybinds should be checked.
+  -- @param key The key identifier to match against registered keybinds.
+  -- @return `true` if a matching effect handler was found and invoked, `false` otherwise.
   local function call_effect_handler(line, key)
     local line_keybinds = registered_keybinds[line]
     if line_keybinds then
@@ -275,6 +335,8 @@ function M.new_view_only_win(name, filetype)
     return false
   end
 
+  -- Invoke effect handlers bound to the current cursor line and global handlers for a given key.
+  -- @param key The key identifier for the effect to dispatch; handlers registered for the current cursor line and for the global line (-1) will be invoked.
   local function dispatch_effect(key)
     local line = vim.api.nvim_win_get_cursor(0)[1]
     log.fmt_trace("Dispatching effect on line %d, key %s, bufnr %s", line, key, bufnr)
@@ -374,6 +436,9 @@ function M.new_view_only_win(name, filetype)
     end
   end
 
+  -- Open the configured view-only floating window, optionally create a translucent backdrop, and install lifecycle autocommands.
+  -- Initializes the buffer and window options, registers autocmds for resizing, command-line search events, automatic close behavior, and backdrop cleanup.
+  -- @return The window id of the created floating window.
   local function open()
     bufnr = vim.api.nvim_create_buf(false, true)
     win_id = vim.api.nvim_open_win(bufnr, true, create_popup_window_opts(window_opts, false))

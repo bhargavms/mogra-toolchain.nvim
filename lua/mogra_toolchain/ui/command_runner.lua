@@ -16,7 +16,12 @@ local M = {}
 ---@param cmd string Shell command to execute
 ---@param on_output OutputCallback? Per-invocation callback to handle output lines
 ---@param on_complete fun(success: boolean)? Optional callback called when command completes
----@return integer job_id Job ID from vim.fn.jobstart (0 or negative on error)
+-- Run a shell command asynchronously and stream its combined stdout/stderr lines to callbacks.
+-- The command is executed via `sh -c "<cmd> 2>&1"` so both stdout and stderr are captured.
+-- @param cmd string The shell command to execute.
+-- @param on_output fun(line:string)|nil Optional callback invoked for each non-empty output line; receives the line string.
+-- @param on_complete fun(success:boolean)|nil Optional callback invoked when the command exits; receives `true` if exit code is 0, `false` otherwise.
+-- @return integer job_id Job ID returned by `vim.fn.jobstart`; 0 or a negative value indicates failure to start the job.
 function M.run(cmd, on_output, on_complete)
   -- Wrap command in shell to ensure proper output capture
   ---@type string[]

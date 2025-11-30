@@ -3,7 +3,9 @@ local settings = require("mogra_toolchain.settings")
 local M = {}
 
 ---@param tool Tool
----@return boolean success
+-- Validate a tool descriptor and report Neovim health errors for missing or invalid fields.
+-- @param tool Table describing a tool. Expected keys: `name` (string), `description` (string), `is_installed` (function), and either `install_cmd` (string) or `get_install_cmd` (function).
+-- @return `true` if the tool descriptor contains all required fields, `false` otherwise.
 local function checkTool(tool)
   if not tool then
     vim.health.error("mogra_toolchain: Invalid tool object provided to register")
@@ -38,6 +40,11 @@ local function checkTool(tool)
   return true
 end
 
+-- Run health checks for all configured mogra_toolchain tools and report their installation status.
+-- 
+-- If the Neovim health API is unavailable, posts an error notification and returns.
+-- Starts a health section titled "Mogra Toolchain". If no tools are configured, logs a health warning and returns.
+-- For each tool that passes validation, logs `ok` if the tool reports installed, otherwise logs a health warning that the tool is available but not installed.
 function M.check()
   if not vim.health or not vim.health.start then
     vim.notify("Neovim health API not available", vim.log.levels.ERROR)

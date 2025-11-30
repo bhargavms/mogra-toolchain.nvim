@@ -44,7 +44,9 @@ local DEFAULT_SETTINGS = {
 M._DEFAULT_SETTINGS = DEFAULT_SETTINGS
 M.current = vim.deepcopy(M._DEFAULT_SETTINGS)
 
----@param opts Config?
+-- Merge user-provided configuration options into the module's current settings.
+-- If `opts` is provided, its fields are deep-merged into `M.current`, overwriting existing values.
+-- @param opts Config? Optional configuration overrides to apply to the current settings.
 function M.setup(opts)
   if opts then
     M.current = vim.tbl_deep_extend("force", vim.deepcopy(M.current), opts)

@@ -130,7 +130,18 @@ end
 ---@field post_update function? Optional function to run after update
 
 ---@param config TarToolConfig
----@return Tool
+-- Create a tar-based tool descriptor from the provided configuration.
+-- The returned table includes fields for checking installation and for performing installation or update via a shell command string.
+-- @param config Table with the tar tool configuration. Required fields: `name`, `description`, `version`, `url`, `install_dir`, `executable_dir`. Optional fields: `executable_name` (defaults to `name`), `archive_name` (defaults to `name`), `post_install`, `post_update`.
+-- @return Tool A table with the following fields:
+--   - `name` (string)
+--   - `description` (string)
+--   - `is_installed` (function) — returns `true` if the executable is available in PATH, `false` otherwise
+--   - `install_cmd` (string) — shell command that downloads, extracts, and links the executable into `executable_dir`
+--   - `update_cmd` (string) — same value as `install_cmd`
+--   - `get_install_cmd` (function) — returns the `install_cmd` string
+--   - `get_update_cmd` (function) — returns the `update_cmd` string
+-- @throws If any of `name`, `description`, `version`, `url`, `install_dir`, or `executable_dir` are missing.
 function M.create_tar_tool(config)
   if not config.name or not config.description or not config.version or not config.url or not config.install_dir or not config.executable_dir then
     error("Missing required fields in TarToolConfig")
@@ -142,11 +153,14 @@ function M.create_tar_tool(config)
   local temp_dir = vim.fn.tempname()
   vim.fn.mkdir(temp_dir, "p")
 
+  -- Check whether the configured executable is available in the system PATH.
+  -- @return `true` if the executable specified by `config.executable_name` is found in PATH, `false` otherwise.
   local function is_installed()
     return vim.fn.executable(config.executable_name) == 1
   end
 
-  -- Get the install command as a single script (for output capture)
+  -- Builds a single shell command that downloads the tool archive, extracts it into the install directory, and creates a symlink for the executable.
+  -- @return A string containing a shell command that creates the install and executable directories, downloads the tarball to the temporary directory, extracts it into `install_dir`, removes any existing symlink in `executable_dir`, and creates a new symlink pointing to the installed executable.
   local function get_install_cmd()
     local cmds = {
       string.format("mkdir -p %s", config.install_dir),

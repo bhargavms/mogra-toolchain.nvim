@@ -21,7 +21,16 @@ local internal_config = {
   float_precision = 0.01,
 }
 
--- Helper to get current log config (reads from settings at call time)
+-- Produce the merged logging configuration by combining internal defaults with user-provided settings.
+-- Reads user overrides from `settings.current.log` at call time and falls back to internal defaults.
+-- @return table A configuration table with fields:
+--   - name: plugin name for log messages
+--   - highlights: boolean to enable console highlighting
+--   - modes: list of log level descriptors
+--   - float_precision: numeric threshold for float formatting
+--   - level: numeric log level (defaults to `vim.log.levels.INFO`)
+--   - use_console: boolean whether to emit logs to the Neovim console
+--   - use_file: boolean whether to write logs to the logfile
 local function get_config()
   local log_settings = settings.current.log or {}
   return {

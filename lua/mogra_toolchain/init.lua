@@ -28,7 +28,8 @@ M.config = setmetatable({}, {
 
 M.has_setup = false
 
----@param opts Config?
+-- Configures the module and initializes the toolchain command interface.
+-- @param opts Optional configuration table applied to the module before initialization. When provided, its fields are passed to the settings setup. The module's initialization state is set to true after this call.
 function M.setup(opts)
   if opts then
     settings.setup(opts)

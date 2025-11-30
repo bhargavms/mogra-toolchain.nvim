@@ -75,7 +75,19 @@ end
 ---@field post_update function? Optional function to run after update
 
 ---@param config HomebrewToolConfig
----@return Tool
+-- Create a Homebrew-backed tool descriptor from the provided configuration.
+-- @param config Table with required fields:
+--   - name (string): tool executable name.
+--   - description (string): short description of the tool.
+--   - package_name (string): Homebrew package name to install/upgrade.
+--   - post_install? (function): optional callback to run after installation (not invoked by this function).
+--   - post_update? (function): optional callback to run after update (not invoked by this function).
+-- @return Tool A table with:
+--   - name (string)
+--   - description (string)
+--   - is_installed (function): returns `true` if the tool executable is available in PATH, `false` otherwise.
+--   - get_install_cmd (function): returns `"<brew install ...>"` if Homebrew is available, otherwise `nil, "Homebrew is not installed"`.
+--   - get_update_cmd (function): returns `"<brew upgrade ...>"` if Homebrew is available, otherwise `nil, "Homebrew is not installed"`.
 function M.create_homebrew_tool(config)
   if not config.name or not config.description or not config.package_name then
     error("Missing required fields in HomebrewToolConfig")
@@ -86,10 +98,15 @@ function M.create_homebrew_tool(config)
     return vim.fn.executable(config.name) == 1
   end
 
+  -- Checks whether Homebrew is available on the system.
+  -- @return `true` if the `brew` executable is available in PATH, `false` otherwise.
   local function is_homebrew_installed()
     return vim.fn.executable("brew") == 1
   end
 
+  -- Builds a Homebrew CLI command string for the configured package.
+  -- @param command The Homebrew subcommand to run (for example, "install" or "upgrade").
+  -- @return The full `brew` command string targeting the builder's package (e.g., "brew install <package>").
   local function get_brew_command(command)
     return string.format("brew %s %s", command, config.package_name)
   end

@@ -5,6 +5,8 @@ local log = require("mogra_toolchain.ui.core.log")
 local EventEmitter = {}
 EventEmitter.__index = EventEmitter
 
+-- Create a new EventEmitter instance with empty persistent and one-time handler registries.
+-- @return The newly created EventEmitter instance.
 function EventEmitter:new()
   local instance = {}
   setmetatable(instance, self)
@@ -15,7 +17,10 @@ end
 
 ---@generic T
 ---@param obj T
----@return T
+-- Initialize a table as an EventEmitter instance.
+-- Sets the EventEmitter metatable and prepares internal handler tables on the given object.
+-- @param obj The table to initialize as an EventEmitter.
+-- @return obj The same table now initialized as an EventEmitter.
 function EventEmitter.init(obj)
   setmetatable(obj, EventEmitter)
   obj.__event_handlers = {}
@@ -24,7 +29,10 @@ function EventEmitter.init(obj)
 end
 
 ---@param event any
----@param handler fun(...): any
+-- Invokes a handler with the provided arguments and logs a warning if the handler raises an error.
+-- @param event any The event identifier associated with the handler (used in the log message).
+-- @param handler fun(...): any The callback to invoke.
+-- @param ... Arguments forwarded to the handler.
 local function call_handler(event, handler, ...)
   local ok, err = pcall(handler, ...)
   if not ok then
@@ -32,7 +40,10 @@ local function call_handler(event, handler, ...)
   end
 end
 
----@param event any
+-- Emit an event to all registered handlers, including one-time handlers which are removed after invocation.
+-- @param event The event key used to look up handlers.
+-- @param ... Arguments forwarded to each handler.
+-- @return The emitter instance (`self`) to allow method chaining.
 function EventEmitter:emit(event, ...)
   if self.__event_handlers[event] then
     for handler in pairs(self.__event_handlers[event]) do
@@ -53,7 +64,10 @@ function EventEmitter:emit(event, ...)
 end
 
 ---@param event any
----@param handler fun(payload: any)
+-- Registers a persistent handler for the specified event.
+-- @param event The event identifier (used as lookup key for handlers).
+-- @param handler Function invoked when the event is emitted; receives the emitted arguments.
+-- @return The EventEmitter instance (`self`) for method chaining.
 function EventEmitter:on(event, handler)
   if not self.__event_handlers[event] then
     self.__event_handlers[event] = {}
@@ -63,7 +77,10 @@ function EventEmitter:on(event, handler)
 end
 
 ---@param event any
----@param handler fun(payload: any)
+-- Registers a handler that will be invoked the next time `event` is emitted and then removed.
+-- @param event The event key to listen for.
+-- @param handler function(payload) Called with the emission arguments when the event occurs.
+-- @return The EventEmitter instance (`self`).
 function EventEmitter:once(event, handler)
   if not self.__event_handlers_once[event] then
     self.__event_handlers_once[event] = {}
@@ -73,7 +90,10 @@ function EventEmitter:once(event, handler)
 end
 
 ---@param event any
----@param handler fun(payload: any)
+-- Removes a previously registered handler for the given event from both persistent and one-time listener registries.
+-- @param event The event key whose listener should be removed.
+-- @param handler The handler function to remove.
+-- @return The EventEmitter instance (self).
 function EventEmitter:off(event, handler)
   if self.__event_handlers[event] then
     self.__event_handlers[event][handler] = nil
@@ -84,7 +104,9 @@ function EventEmitter:off(event, handler)
   return self
 end
 
----@private
+-- Clears all registered persistent and one-time event handlers on the instance.
+-- After calling, no handlers will be invoked for any event until new handlers are registered.
+-- @private
 function EventEmitter:__clear_event_handlers()
   self.__event_handlers = {}
   self.__event_handlers_once = {}

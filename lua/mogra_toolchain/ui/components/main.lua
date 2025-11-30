@@ -48,7 +48,9 @@ return function(state)
 
   local items = {}
 
-  -- Helper to add a line and track it
+  -- Adds a rendered node as a new line, increments the renderer's current line counter, and maps that line to a tool when provided.
+  -- @param node The UI node to append to the current items list.
+  -- @param tool Optional tool object; if given, associates the new line number with this tool in state.tools.line_to_tool.
   local function add_line(node, tool)
     current_line = current_line + 1
     if tool then
@@ -63,7 +65,12 @@ return function(state)
     table.insert(items, Ui.EmptyLine())
   end
 
-  -- Helper to render a tool line
+  -- Renders a single tool entry and optional recent log lines into the UI items list.
+  -- Renders a highlighted line containing a status glyph, the tool name, and its description.
+  -- When `show_log` is true and the tool is currently installing, appends up to the last five non-empty lines from `tool.tailed_output` as indented log lines with contextual highlighting.
+  -- Updates `current_line` for each appended line and (via `add_line`) maps the main tool line to the provided tool so it can be selected.
+  -- @param tool Table representing the tool; expected fields: `name`, `description`, `install_state`, and optional `tailed_output`.
+  -- @param show_log boolean If true, include recent tailed output lines for installing tools.
   local function render_tool(tool, show_log)
     local install_state = tool.install_state or "not_installed"
     local is_installing = install_state == "installing"

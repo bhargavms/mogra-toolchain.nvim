@@ -2,7 +2,8 @@ local Ui = require("mogra_toolchain.ui.core.ui")
 local p = require("mogra_toolchain.ui.palette")
 local settings = require("mogra_toolchain.settings")
 
--- Lazy-load mogra_toolchain only for version
+-- Lazily retrieves the version string from the mogra_toolchain module.
+-- @return string The version value from `mogra_toolchain.version`.
 local function get_version()
   return require("mogra_toolchain").version
 end
