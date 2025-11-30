@@ -102,7 +102,7 @@ return function(state)
         if line and line ~= "" then
           local hl = "MograToolchainMuted"
           if line:match("^#") or line:match("^%[") then
-            hl = "MograToolchainSecondaryHighlight"
+            hl = "MograToolchainHighlightSecondary"
           elseif line:match("[Ee]rror") or line:match("[Ff]ail") then
             hl = "MograToolchainError"
           elseif line:match("[Ss]uccess") or line:match("[Dd]one") then
