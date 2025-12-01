@@ -14,12 +14,32 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --color always --check lua
 
-  test:
+  luacheck:
+    name: luacheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install luacheck
+        run: sudo apt-get install -y lua-check
+      - name: Run luacheck
+        run: make lint
+
+  test-standalone:
+    name: standalone tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Lua
+        run: sudo apt-get install -y lua5.4
+      - name: Run standalone tests
+        run: make test-standalone
+
+  test-neovim:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         nvim-versions: ['stable', 'nightly']
-    name: test
+    name: neovim tests (${{ matrix.nvim-versions }})
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -29,5 +49,5 @@ jobs:
           neovim: true
           version: ${{ matrix.nvim-versions }}
 
-      - name: run tests
+      - name: run all neovim tests
         run: make test

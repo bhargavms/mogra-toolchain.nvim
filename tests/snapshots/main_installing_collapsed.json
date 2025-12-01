@@ -1,0 +1,63 @@
+{
+  "highlights": [
+    {
+      "col_end": 12,
+      "col_start": 2,
+      "hl_group": "MograToolchainHeading",
+      "line": 1
+    },
+    {
+      "col_end": 16,
+      "col_start": 12,
+      "hl_group": "MograToolchainMuted",
+      "line": 1
+    },
+    {
+      "col_end": 6,
+      "col_start": 2,
+      "hl_group": "MograToolchainMuted",
+      "line": 2
+    },
+    {
+      "col_end": 37,
+      "col_start": 13,
+      "hl_group": "MograToolchainMuted",
+      "line": 2
+    },
+    {
+      "col_end": 19,
+      "col_start": 2,
+      "hl_group": "MograToolchainMuted",
+      "line": 3
+    },
+    {
+      "col_end": 62,
+      "col_start": 2,
+      "hl_group": "MograToolchainMuted",
+      "line": 4
+    },
+    {
+      "col_end": 42,
+      "col_start": 2,
+      "hl_group": "MograToolchainComment",
+      "line": 5
+    },
+    {
+      "col_end": 46,
+      "col_start": 0,
+      "hl_group": "MograToolchainComment",
+      "line": 8
+    }
+  ],
+  "lines": [
+    "",
+    "  Installing (1)",
+    "  ⠸ ripgrep - Fast grep alternative",
+    "    ▶ ==> Summary",
+    "    ▶ 🍺  /usr/local/Cellar/ripgrep/13.0.0: 6 files, 5.3MB",
+    "    ▼ Press 'l' to expand (4 more lines)",
+    "",
+    "",
+    " i: Install  u: Update  l: Toggle log  q: Quit"
+  ]
+}

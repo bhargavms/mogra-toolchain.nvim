@@ -3,8 +3,30 @@ on:
   push:
     tags:
       - 'v*'
+
 jobs:
+  test:
+    name: run tests before release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Lua
+        run: sudo apt-get install -y lua5.4
+
+      - name: Run standalone tests
+        run: make test-standalone
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Run neovim tests
+        run: make test
+
   luarocks-upload:
+    needs: test
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
